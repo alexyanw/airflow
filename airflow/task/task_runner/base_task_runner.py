@@ -117,15 +117,18 @@ class BaseTaskRunner(LoggingMixin):
         full_cmd = run_with + cmd
 
         self.log.info('Running: %s', full_cmd)
-        proc = subprocess.Popen(
-            full_cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            universal_newlines=True,
-            close_fds=True,
-            env=os.environ.copy(),
-            preexec_fn=os.setsid
-        )
+        kwargs = {
+            stdout: subprocess.PIPE,
+            stderr: subprocess.STDOUT,
+            universal_newlines: True,
+            env: os.environ.copy(),
+                }
+        if sys.platform != 'win32':
+            kwargs.update({
+                close_fds: True,
+                preexec_fn: os.setsid
+                })
+        proc = subprocess.Popen( full_cmd, **kwargs)
 
         # Start daemon thread to read subprocess logging output
         log_reader = threading.Thread(
