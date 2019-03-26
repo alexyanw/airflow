@@ -39,8 +39,6 @@ from airflow.utils.timezone import parse as parsedate
 import json
 from tabulate import tabulate
 
-import daemon
-from daemon.pidfile import TimeoutPIDLockFile
 import signal
 import sys
 import threading
@@ -954,6 +952,8 @@ def webserver(args):
                 sys.exit(gunicorn_master_proc.returncode)
 
         if args.daemon:
+            import daemon
+            from daemon.pidfile import TimeoutPIDLockFile
             base, ext = os.path.splitext(pid)
             ctx = daemon.DaemonContext(
                 pidfile=TimeoutPIDLockFile(base + "-monitor" + ext, -1),

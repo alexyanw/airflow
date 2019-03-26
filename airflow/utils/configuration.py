@@ -20,6 +20,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 
 import os
+import sys
 import json
 from tempfile import mkstemp
 
@@ -36,7 +37,7 @@ def tmp_configuration_copy(chmod=0o600):
     temp_fd, cfg_path = mkstemp()
 
     with os.fdopen(temp_fd, 'w') as temp_file:
-        if chmod is not None:
+        if chmod is not None and sys.platform != 'win32':
             os.fchmod(temp_fd, chmod)
         json.dump(cfg_dict, temp_file)
 

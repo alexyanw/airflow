@@ -224,6 +224,7 @@ class TlpExecutor(BaseExecutor):
                     self.queued_tasks.pop(key)
                     self.running[key] = command
                     self.tasks[key] = result
+                    self.log.info('send task %s command: %s to tlp batch %s', key, command, result)
 
         # Calling child class sync method
         self.log.debug("Calling the {} sync method".format(self.__class__))
