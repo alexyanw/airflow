@@ -35,12 +35,16 @@ TLP_SEND_ERR_MSG_HEADER = 'Error sending TLP task'
 
 def tlp_submit_command(command, queue):
     log = LoggingMixin().log
-    log.info("Submitting command in TLP: %s", command)
+    log.info("Submitting command to TLP: %s", command)
     env = os.environ.copy()
     tlp_batch = None
     if not queue:
         queue = 'regress_linux'
     try:
+        # hack to remove -sd option
+        i_sd = command.index('-sd')
+        command = command[:i_sd] + command[i_sd+2:]
+        
         tlp_tmpl = {'flow_params': {'all': {'airflow_task_command': ' '.join(command)}},
                     'project_params': {'all': {'HLM_TIER': 'a630v1'}},
                     'resources': {'all': {'TLP_QUEUE': queue}}}
