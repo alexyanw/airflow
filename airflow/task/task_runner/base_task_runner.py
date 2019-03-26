@@ -21,6 +21,7 @@ from __future__ import unicode_literals
 
 import getpass
 import os
+import sys
 import subprocess
 import threading
 
@@ -118,15 +119,15 @@ class BaseTaskRunner(LoggingMixin):
 
         self.log.info('Running: %s', full_cmd)
         kwargs = {
-            stdout: subprocess.PIPE,
-            stderr: subprocess.STDOUT,
-            universal_newlines: True,
-            env: os.environ.copy(),
+            'stdout': subprocess.PIPE,
+            'stderr': subprocess.STDOUT,
+            'universal_newlines': True,
+            'env': os.environ.copy(),
                 }
         if sys.platform != 'win32':
             kwargs.update({
-                close_fds: True,
-                preexec_fn: os.setsid
+                'close_fds': True,
+                'preexec_fn': os.setsid
                 })
         proc = subprocess.Popen( full_cmd, **kwargs)
 
