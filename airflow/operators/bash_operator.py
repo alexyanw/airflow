@@ -123,8 +123,9 @@ class BashOperator(BaseOperator):
                     stdout=PIPE,
                     stderr=STDOUT,
                     cwd=tmp_dir,
-                    env=self.env,
-                    preexec_fn=pre_exec)
+                    env=self.env
+                    #preexec_fn=pre_exec
+                    )
 
                 self.sub_process = sub_process
 

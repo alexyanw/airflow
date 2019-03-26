@@ -123,6 +123,7 @@ class BaseTaskRunner(LoggingMixin):
             'stderr': subprocess.STDOUT,
             'universal_newlines': True,
             'env': os.environ.copy(),
+            'shell': True
                 }
         if sys.platform != 'win32':
             kwargs.update({
