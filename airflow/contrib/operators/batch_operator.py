@@ -100,37 +100,36 @@ class BatchOperator(BaseOperator):
 
         self.lineage_data = self.batch_command
 
-        with TemporaryDirectory(prefix='airflowtmp') as tmp_dir:
-            with NamedTemporaryFile(dir=tmp_dir, prefix=self.task_id) as tmp_file:
-                tmp_file.write(bytes(self.batch_command, 'utf_8'))
-                tmp_file.flush()
-                script_location = os.path.abspath(tmp_file.name)
-                self.log.info('Temporary script location: %s', script_location)
+        with NamedTemporaryFile(prefix=self.task_id, suffix='.bat', delete=False) as tmp_file:
+            tmp_file.write(bytes(self.batch_command, 'utf_8'))
+            tmp_file.flush()
+            script_location = os.path.abspath(tmp_file.name)
+            self.log.info('Temporary script location: %s', script_location)
 
-                self.log.info('Running command: %s', self.batch_command)
-                sub_process = Popen(
-                    tmp_file.name,
-                    stdout=PIPE,
-                    stderr=STDOUT,
-                    cwd=tmp_dir,
-                    env=self.env,
-                    creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
-                    )
+        self.log.info('Running command: %s', self.batch_command)
+        sub_process = Popen(
+            tmp_file.name,
+            stdout=PIPE,
+            stderr=STDOUT,
+            cwd=tmp_dir,
+            env=self.env,
+            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
+            )
 
-                self.sub_process = sub_process
+        self.sub_process = sub_process
 
-                self.log.info('Output:')
-                line = ''
-                for raw_line in iter(sub_process.stdout.readline, b''):
-                    line = raw_line.decode(self.output_encoding).rstrip()
-                    self.log.info(line)
+        self.log.info('Output:')
+        line = ''
+        for raw_line in iter(sub_process.stdout.readline, b''):
+            line = raw_line.decode(self.output_encoding).rstrip()
+            self.log.info(line)
 
-                sub_process.wait()
+        sub_process.wait()
 
-                self.log.info('Command exited with return code %s', sub_process.returncode)
+        self.log.info('Command exited with return code %s', sub_process.returncode)
 
-                if sub_process.returncode:
-                    raise AirflowException('Batch command failed')
+        if sub_process.returncode:
+            raise AirflowException('Batch command failed')
 
         return line
 
