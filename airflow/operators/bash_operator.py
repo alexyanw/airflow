@@ -123,7 +123,7 @@ class BashOperator(BaseOperator):
                     stdout=PIPE,
                     stderr=STDOUT,
                     cwd=tmp_dir,
-                    env=self.env
+                    env=self.env,
                     preexec_fn=pre_exec
                     )
 

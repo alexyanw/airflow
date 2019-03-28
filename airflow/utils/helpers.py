@@ -270,23 +270,26 @@ def reap_process_group(pid, log, sig=signal.SIGTERM,
     children.append(parent)
 
     try:
-        pg = os.getpgid(pid)
+        #pg = os.getpgid(pid)
+        for child in children:
+            child.send_signal(sig)
     except OSError as err:
         # Skip if not such process - we experience a race and it just terminated
         if err.errno == errno.ESRCH:
             return
         raise
 
-    log.info("Sending %s to GPID %s", sig, pg)
-    os.killpg(os.getpgid(pid), sig)
+    log.info("Sending %s to GPID %s", sig, pid)
+    #os.killpg(os.getpgid(pid), sig)
 
     gone, alive = psutil.wait_procs(children, timeout=timeout, callback=on_terminate)
 
     if alive:
         for p in alive:
             log.warn("process %s (%s) did not respond to SIGTERM. Trying SIGKILL", p, pid)
+            p.kill()
 
-        os.killpg(os.getpgid(pid), signal.SIGKILL)
+        #os.killpg(os.getpgid(pid), signal.SIGKILL)
 
         gone, alive = psutil.wait_procs(alive, timeout=timeout, callback=on_terminate)
         if alive:
