@@ -23,7 +23,7 @@ import signal
 from builtins import bytes
 import subprocess
 from subprocess import Popen, STDOUT, PIPE
-from tempfile import gettempdir, NamedTemporaryFile
+from tempfile import gettempdir, mkdtemp, NamedTemporaryFile
 
 from airflow.exceptions import AirflowException
 from airflow.models import BaseOperator
@@ -100,36 +100,46 @@ class BatchOperator(BaseOperator):
 
         self.lineage_data = self.batch_command
 
-        with NamedTemporaryFile(prefix=self.task_id, suffix='.bat', delete=False) as tmp_file:
-            tmp_file.write(bytes(self.batch_command, 'utf_8'))
-            tmp_file.flush()
-            script_location = os.path.abspath(tmp_file.name)
-            self.log.info('Temporary script location: %s', script_location)
+        try:
+            tmp_dir = mkdtemp(suffix=suffix, prefix=prefix, dir=dir)
 
-        self.log.info('Running command: %s', self.batch_command)
-        sub_process = Popen(
-            tmp_file.name,
-            stdout=PIPE,
-            stderr=STDOUT,
-            #cwd=tmp_dir,
-            env=self.env,
-            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
-            )
+            with NamedTemporaryFile(dir=tmp_dir, prefix=self.task_id, suffix='.bat', delete=False) as tmp_file:
+                tmp_file.write(bytes(self.batch_command, 'utf_8'))
+                tmp_file.flush()
+                script_location = os.path.abspath(tmp_file.name)
+                self.log.info('Temporary script location: %s', script_location)
 
-        self.sub_process = sub_process
+            self.log.info('Running command: %s', self.batch_command)
+            sub_process = Popen(
+                tmp_file.name,
+                stdout=PIPE,
+                stderr=STDOUT,
+                cwd=tmp_dir,
+                env=self.env,
+                creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
+                )
 
-        self.log.info('Output:')
-        line = ''
-        for raw_line in iter(sub_process.stdout.readline, b''):
-            line = raw_line.decode(self.output_encoding).rstrip()
-            self.log.info(line)
+            self.sub_process = sub_process
 
-        sub_process.wait()
+            self.log.info('Output:')
+            line = ''
+            for raw_line in iter(sub_process.stdout.readline, b''):
+                line = raw_line.decode(self.output_encoding).rstrip()
+                self.log.info(line)
 
-        self.log.info('Command exited with return code %s', sub_process.returncode)
+            sub_process.wait()
 
-        if sub_process.returncode:
-            raise AirflowException('Batch command failed')
+            self.log.info('Command exited with return code %s', sub_process.returncode)
+
+            if sub_process.returncode:
+                raise AirflowException('Batch command failed')
+        finally:
+            try:
+                shutil.rmtree(tmp_dir)
+            except OSError as e:
+                # ENOENT - no such file or directory
+                if e.errno != errno.ENOENT:
+                    raise e
 
         return line
 
