@@ -24,6 +24,7 @@ from builtins import bytes
 import subprocess
 from subprocess import Popen, STDOUT, PIPE
 from tempfile import gettempdir, mkdtemp, NamedTemporaryFile
+import shutil
 
 from airflow.exceptions import AirflowException
 from airflow.models import BaseOperator
@@ -101,7 +102,7 @@ class BatchOperator(BaseOperator):
         self.lineage_data = self.batch_command
 
         try:
-            tmp_dir = mkdtemp(suffix=suffix, prefix=prefix, dir=dir)
+            tmp_dir = mkdtemp(prefix='airflowtmp')
 
             with NamedTemporaryFile(dir=tmp_dir, prefix=self.task_id, suffix='.bat', delete=False) as tmp_file:
                 tmp_file.write(bytes(self.batch_command, 'utf_8'))
