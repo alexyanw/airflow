@@ -111,7 +111,7 @@ class BatchOperator(BaseOperator):
             tmp_file.name,
             stdout=PIPE,
             stderr=STDOUT,
-            cwd=tmp_dir,
+            #cwd=tmp_dir,
             env=self.env,
             creationflags=subprocess.CREATE_NEW_PROCESS_GROUP
             )
